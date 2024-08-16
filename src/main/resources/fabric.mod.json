@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "pnbs",
+  "version": "${version}",
+
+  "name": "piano-noteblock-thing",
+  "description": "",
+  "authors": [],
+  "contact": {},
+
+  "license": "All-Rights-Reserved",
+  "icon": "assets/pnbs/icon.png",
+
+  "environment": "client",
+  "entrypoints": {
+    "client": ["me.caek.pnbs.Mod"]
+  },
+
+  "mixins": [
+    "pnbs.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
