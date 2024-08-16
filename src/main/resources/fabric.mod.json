@@ -8,8 +8,7 @@
   "authors": [],
   "contact": {},
 
-  "license": "All-Rights-Reserved",
-  "icon": "assets/pnbs/icon.png",
+  "license": "CC0-1.0",
 
   "environment": "client",
   "entrypoints": {
