@@ -126,7 +126,19 @@ public class NoteManager {
 
             System.out.println("kn" + key.note + ", n:" + note + ", tn:" + targetNote + ", nf: " + noteOffset);
 
-            for (int i = 0; i < noteOffset; i++) {
+            int batchSize = 1;
+            int batches = (int) Math.floor((double) noteOffset /batchSize);
+            int remainder = noteOffset-batches;
+
+            for (int i = 0; i < batches; i++) {
+                Scheduler.schedule((unused) -> {
+                    for (int k = 0; k < batchSize; k++) {
+                        mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(pos.toCenterPos(), Direction.UP, pos, false));
+                    }
+                    return null;
+                });
+            }
+            for (int j = 0; j < remainder; j++) {
                 Scheduler.schedule((unused) -> {
                     mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(pos.toCenterPos(), Direction.UP, pos, false));
                     return null;

@@ -2,6 +2,7 @@ package me.caek.pnbs;
 
 import me.caek.pnbs.music.NoteManager;
 import me.caek.pnbs.music.Scales;
+import me.caek.pnbs.piano.MidiManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.minecraft.block.Block;
@@ -16,6 +17,7 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
+import javax.sound.midi.MidiUnavailableException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,22 +29,38 @@ public class CommandManager {
                     .then(ClientCommandManager.literal("scan")
                             .executes(ctx -> {
                                 MinecraftClient mc = MinecraftClient.getInstance();
-                                NoteManager noteManager = Mod.getNoteManager();
-                                ArrayList<Integer> notes = Scales.generateMajor(2);
 
-                                for (int i = 0; i < notes.size(); i++) {
-                                    notes.set(i, notes.get(i));
+                                try {
+                                    int found = MidiManager.scanForDevices();
+                                    System.out.println(found + " device(s) found");
+                                } catch (MidiUnavailableException e) {
+                                    System.err.println(e);
                                 }
+                                //NoteManager noteManager = Mod.getNoteManager();
+                                //ArrayList<Integer> notes = Scales.generateMajor(2);
+
+                                //for (int i = 0; i < notes.size(); i++) {
+                                //    notes.set(i, notes.get(i));
+                                //}
 
                                 //ArrayList<Integer> notes = new ArrayList<>();
                                 //notes.add(1);
                                 //notes.add(2);
-                                noteManager.findNoteBlocks(mc, notes, 5);
-                                noteManager.tuneNoteBlocks(mc);
+                                //noteManager.findNoteBlocks(mc, notes, 5);
+                                //noteManager.tuneNoteBlocks(mc);
 
-                                for (Integer note : notes) {
-                                    noteManager.playNote(mc, note);
-                                }
+                                //for (Integer note : notes) {
+                                //    noteManager.playNote(mc, note);
+                                //}
+                                return 0;
+                            }))
+                    .then(ClientCommandManager.literal("close")
+                            .executes(ctx -> {
+                                MidiManager.closeAllDevices();
+                                return 0;
+                            }))
+                    .then(ClientCommandManager.literal("test")
+                            .executes(ctx -> {
                                 return 0;
                             }))
             );
