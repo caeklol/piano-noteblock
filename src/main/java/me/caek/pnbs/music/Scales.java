@@ -8,10 +8,12 @@ public class Scales {
     public static ArrayList<Integer> generate(List<Integer> scale, int octaves) {
         ArrayList<Integer> result = new ArrayList<>();
         result.add(0);
-        for (int i = 0; i < octaves; i++) {
-            for (Integer step : scale) {
-               result.add(result.getLast() + step);
-            }
+        int scaleIndex = 0;
+        while (result.getLast() < (octaves * 24)) {
+            System.out.println(result.getLast());
+            result.add(result.getLast() + scale.get(scaleIndex));
+            scaleIndex++;
+            if (scaleIndex == scale.size()) scaleIndex = 0;
         }
         return result;
     }

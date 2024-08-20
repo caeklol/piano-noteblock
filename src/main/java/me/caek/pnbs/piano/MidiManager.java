@@ -3,6 +3,7 @@ package me.caek.pnbs.piano;
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
+import javax.sound.midi.Transmitter;
 import java.util.ArrayList;
 
 public class MidiManager {
@@ -30,8 +31,10 @@ public class MidiManager {
 
         if(!devices.isEmpty()) {
             for (MidiDevice device : devices) {
-                System.out.println(device.getDeviceInfo().getName());
                 device.getTransmitter().setReceiver(new MidiInputReceiver(device));
+                for (Transmitter transmitter : device.getTransmitters()) {
+                    transmitter.setReceiver(new MidiInputReceiver(device));
+                }
                 device.open();
                 recognized++;
             }

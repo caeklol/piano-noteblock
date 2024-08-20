@@ -124,24 +124,11 @@ public class NoteManager {
                 noteOffset = (25-note)+targetNote;
             }
 
-            System.out.println("kn" + key.note + ", n:" + note + ", tn:" + targetNote + ", nf: " + noteOffset);
+            //System.out.println("kn" + key.note + ", n:" + note + ", tn:" + targetNote + ", nf: " + noteOffset);
 
-            int batchSize = 1;
-            int batches = (int) Math.floor((double) noteOffset /batchSize);
-            int remainder = noteOffset-batches;
-
-            for (int i = 0; i < batches; i++) {
-                Scheduler.schedule((unused) -> {
-                    for (int k = 0; k < batchSize; k++) {
-                        mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(pos.toCenterPos(), Direction.UP, pos, false));
-                    }
-                    return null;
-                });
-            }
-            for (int j = 0; j < remainder; j++) {
-                Scheduler.schedule((unused) -> {
+            for (int j = 0; j < noteOffset; j++) {
+                Scheduler.schedule(() -> {
                     mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(pos.toCenterPos(), Direction.UP, pos, false));
-                    return null;
                 });
             }
         }
@@ -152,10 +139,10 @@ public class NoteManager {
             Key key = pair.getLeft();
             BlockPos pos = pair.getRight();
             if (key.note == note) {
-                Scheduler.scheduleDelayed((unused) -> {
+                //System.out.println("call!");
+                Scheduler.schedule(() -> {
                     mc.interactionManager.attackBlock(pos, Direction.UP);
-                    return null;
-                }, 5);
+                });
             }
         }
     }

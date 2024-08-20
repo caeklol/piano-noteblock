@@ -1,5 +1,6 @@
 package me.caek.pnbs.piano;
 
+import me.caek.pnbs.Mod;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 
@@ -22,8 +23,17 @@ public class MidiInputReceiver implements Receiver {
         int channel = m.getChannel();
         int pitch = m.getData1();
         int vel = m.getData2();
-        String out = "c: " + channel + ", p: " + pitch + ", v: " + vel;
-        MinecraftClient.getInstance().player.sendMessage(Text.of(out));
+        int command = m.getCommand();
+        boolean released = vel == 0;
+        if (command == 176) { // pedal pressed
+            System.out.println("pedal, r:" + released);
+        } else if (command == 144) {
+            int pitchNormalized = pitch - 36;
+            if (!released) {
+                Mod.getNoteManager().playNote(MinecraftClient.getInstance(), pitchNormalized);
+            }
+        }
+        //MinecraftClient.getInstance().player.sendMessage(Text.of(out));
     }
 
     @Override
