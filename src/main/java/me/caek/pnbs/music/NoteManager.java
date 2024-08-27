@@ -7,7 +7,10 @@ import net.minecraft.block.NoteBlock;
 import net.minecraft.block.enums.NoteBlockInstrument;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
+import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket;
 import net.minecraft.state.property.Property;
+import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Pair;
 import net.minecraft.util.hit.BlockHitResult;
@@ -18,6 +21,11 @@ import java.util.*;
 
 
 public class NoteManager {
+    private int offset;
+
+    public void setNoteOffset(int offset) {
+        this.offset = offset; // TODO: Automatically set this in a setup thing
+    }
 
     public class Key {
         public int noteOffset;
@@ -30,22 +38,6 @@ public class NoteManager {
     }
 
     private ArrayList<Pair<Key, BlockPos>> noteBlockMap = new ArrayList<>();
-
-    private static int getNote(NoteBlockInstrument instrument, Integer noteOffset) {
-        int instrumentOffset;
-
-        if (instrument.equals(NoteBlockInstrument.BELL)) {
-            instrumentOffset = 0;
-        } else if (instrument.equals(NoteBlockInstrument.HARP)) {
-            instrumentOffset = 0;
-        } else if (instrument.equals(NoteBlockInstrument.DIDGERIDOO)) {
-            instrumentOffset = 0;
-        } else {
-            throw new Error("What?!");
-        }
-
-        return instrumentOffset + noteOffset;
-    }
 
     public void findNoteBlocks(MinecraftClient mc, ArrayList<Integer> requiredNotes, int radius) {
         noteBlockMap = new ArrayList<>();
@@ -92,9 +84,8 @@ public class NoteManager {
                     int requiredRemaining = instrumentQueue.size();
                     if (requiredRemaining > 0) {
                         int noteOffset = instrumentQueue.removeFirst();
-                        int noteAdjusted = getNote(instrument, noteOffset);
 
-                        noteBlockMap.add(new Pair<>(new Key(noteAdjusted%24, noteOffset), blockPos));
+                        noteBlockMap.add(new Pair<>(new Key(noteOffset%24, noteOffset), blockPos));
                     }
                 }
             }
@@ -107,6 +98,9 @@ public class NoteManager {
             BlockPos pos = pair.getRight();
 
             ClientWorld world = mc.world;
+
+            if (world == null) return;
+
             BlockState blockState = world.getBlockState(pos);
             Block block = blockState.getBlock();
 
@@ -126,24 +120,35 @@ public class NoteManager {
 
             //System.out.println("kn" + key.note + ", n:" + note + ", tn:" + targetNote + ", nf: " + noteOffset);
 
+            if (mc.interactionManager == null) return;
+
             for (int j = 0; j < noteOffset; j++) {
-                Scheduler.schedule(() -> {
-                    mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(pos.toCenterPos(), Direction.UP, pos, false));
-                });
+                // hmm..
+                mc.getNetworkHandler().sendPacket(new PlayerInteractBlockC2SPacket(Hand.MAIN_HAND, new BlockHitResult(pos.toCenterPos(), Direction.UP, pos, true), 1));
             }
         }
     }
 
     public void playNote(MinecraftClient mc, int note) {
+        boolean found = false;
+        if (mc.interactionManager == null) return;
+        if (mc.player == null) return;
+
+        note += this.offset;
+
         for (Pair<Key, BlockPos> pair : noteBlockMap) {
             Key key = pair.getLeft();
             BlockPos pos = pair.getRight();
             if (key.note == note) {
-                //System.out.println("call!");
-                Scheduler.schedule(() -> {
-                    mc.interactionManager.attackBlock(pos, Direction.UP);
-                });
+                mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, pos, Direction.UP, 1));
+                found = true;
             }
+        }
+        mc.player.sendMessage(Text.of("Playing: " + note));
+
+
+        if (!found) {
+            mc.player.sendMessage(Text.of("A note was not found for the key that was just pressed. Is your offset configured properly?"));
         }
     }
 }

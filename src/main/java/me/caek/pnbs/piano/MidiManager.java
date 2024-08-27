@@ -5,6 +5,8 @@ import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Transmitter;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class MidiManager {
     private static ArrayList<MidiDevice> devices = new ArrayList<MidiDevice>();
@@ -22,8 +24,8 @@ public class MidiManager {
         int recognized = 0;
         MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
 
-        for (int i = 0; i < infos.length; i++) {
-            MidiDevice device = MidiSystem.getMidiDevice(infos[i]);
+        for (MidiDevice.Info info : infos) {
+            MidiDevice device = MidiSystem.getMidiDevice(info);
             if (device.getMaxTransmitters() > 0 || device.getMaxTransmitters() == -1) { // -1 = unlimited
                 devices.add(device);
             }
@@ -31,9 +33,9 @@ public class MidiManager {
 
         if(!devices.isEmpty()) {
             for (MidiDevice device : devices) {
-                device.getTransmitter().setReceiver(new MidiInputReceiver(device));
+                device.getTransmitter().setReceiver(new MidiInputReceiver());
                 for (Transmitter transmitter : device.getTransmitters()) {
-                    transmitter.setReceiver(new MidiInputReceiver(device));
+                    transmitter.setReceiver(new MidiInputReceiver());
                 }
                 device.open();
                 recognized++;
@@ -41,5 +43,9 @@ public class MidiManager {
         }
 
         return recognized;
+    }
+
+    public static List<String> getDeviceNames() {
+        return devices.stream().map((d) -> d.getDeviceInfo().getName()).toList();
     }
 }

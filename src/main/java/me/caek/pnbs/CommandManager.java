@@ -1,5 +1,7 @@
 package me.caek.pnbs;
 
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import me.caek.pnbs.music.NoteManager;
 import me.caek.pnbs.music.Scales;
 import me.caek.pnbs.piano.MidiManager;
@@ -31,45 +33,59 @@ public class CommandManager {
                     .then(ClientCommandManager.literal("scan")
                             .executes(ctx -> {
                                 MinecraftClient mc = MinecraftClient.getInstance();
-
-                                if (mc.player == null) return 1; // what
+                                if (mc.player == null) return 1;
 
                                 try {
                                     int found = MidiManager.scanForDevices();
                                     mc.player.sendMessage(Text.of(found + " device(s) found"));
+                                    List<String> deviceNames = MidiManager.getDeviceNames();
+                                    for (String device : deviceNames) {
+                                        mc.player.sendMessage(Text.of("Device: " + device));
+                                    }
                                 } catch (MidiUnavailableException e) {
+                                    mc.player.sendMessage(Text.of("An error occured:"));
                                     mc.player.sendMessage(Text.of(e.getLocalizedMessage()));
                                 }
                                 return 0;
                             }))
                     .then(ClientCommandManager.literal("close")
                             .executes(ctx -> {
+                                MinecraftClient mc = MinecraftClient.getInstance();
+                                if (mc.player == null) return 1;
+
                                 MidiManager.closeAllDevices();
+                                mc.player.sendMessage(Text.of("All devices closed!"));
                                 return 0;
                             }))
+                    .then(ClientCommandManager.literal("offset")
+                            .then(ClientCommandManager.argument("offset", IntegerArgumentType.integer())
+                                .executes(ctx -> {
+                                    int offset = ctx.getArgument("offset", Integer.class);
+                                    MinecraftClient mc = MinecraftClient.getInstance();
+
+                                    if (mc.player == null) return 1;
+                                    Mod.getNoteManager().setNoteOffset(offset);
+                                    mc.player.sendMessage(Text.of("Set note offset!"));
+                                    return 0;
+                                })))
                     .then(ClientCommandManager.literal("tune")
-                            .executes(ctx -> {
-                                MinecraftClient mc = MinecraftClient.getInstance();
-                                NoteManager nm = Mod.getNoteManager();
+                            .then(ClientCommandManager.argument("octaves", IntegerArgumentType.integer(1, 6))
+                                .executes(ctx -> {
+                                    int octaves = ctx.getArgument("octaves", Integer.class);
+                                    MinecraftClient mc = MinecraftClient.getInstance();
 
-                                ArrayList<Integer> requiredNotes = Scales.generate(List.of(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), 2);
+                                    if (mc.player == null) return 1;
+                                    mc.player.sendMessage(Text.of("Tuning..."));
 
-                                nm.findNoteBlocks(mc, requiredNotes, 5);
-                                nm.tuneNoteBlocks(mc);
-                                return 0;
-                            }))
-                    .then(ClientCommandManager.literal("test")
-                            .executes(ctx -> {
-                                MinecraftClient mc = MinecraftClient.getInstance();
-                                NoteManager nm = Mod.getNoteManager();
+                                    NoteManager nm = Mod.getNoteManager();
 
-                                ArrayList<Integer> requiredNotes = Scales.generate(List.of(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), 4);
+                                    ArrayList<Integer> requiredNotes = Scales.generate(List.of(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), octaves);
 
-                                for (Integer note : requiredNotes) {
-                                    nm.playNote(mc, note);
-                                }
-                                return 0;
-                            }))
+                                    nm.findNoteBlocks(mc, requiredNotes, 5);
+                                    nm.tuneNoteBlocks(mc);
+                                    mc.player.sendMessage(Text.of("Tuning scheduled -- please do not move!"));
+                                    return 0;
+                                })))
             );
         });
     }
